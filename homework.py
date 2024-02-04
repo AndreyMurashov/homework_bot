@@ -31,28 +31,22 @@ logger.addHandler(handler)
 
 
 def log_and_raise(message, type_error):
-    """Логгирует ошибки и выбрасывает исключнения"""
+    """Логгирует ошибки и выбрасывает исключнения."""
     logger.error(message)
     raise type_error(message)
 
 
 def check_tokens():
-    """Проверяет переменные окружения"""
+    """Проверяет переменные окружения."""
     if not PRACTICUM_TOKEN or not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
         message = 'Ошибка в переменных окружения'
         logger.critical(message)
         raise ValueError(message)
-    return all(
-        [
-         PRACTICUM_TOKEN,
-         TELEGRAM_TOKEN,
-         TELEGRAM_CHAT_ID,
-        ]
-    )
+    return all([PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID])
 
 
 def send_message(bot, message):
-    """Отправляет сообщение"""
+    """Отправляет сообщение."""
     try:
         logger.debug(f'Бот отправил сообщение: {message}')
         return bot.send_message(TELEGRAM_CHAT_ID, message)
@@ -62,7 +56,7 @@ def send_message(bot, message):
 
 
 def get_api_answer(timestamp):
-    """Делает запрос к API"""
+    """Делает запрос к API."""
     actual_time = timestamp or int(time.time())
     parameters = {'from_date': actual_time}
     try:
@@ -82,10 +76,10 @@ def get_api_answer(timestamp):
     except Exception as error:
         log_and_raise(f'Ошибка преобразования к JSON-формату : {error}',
                       exceptions.GetAPIAnswerException)
-        
+
 
 def check_response(response):
-    """Проверяет корректность ответа"""
+    """Проверяет корректность ответа."""
     if type(response) != dict:
         log_and_raise(f'Неверный тип данных: {type(response)}',
                       TypeError)
@@ -100,7 +94,7 @@ def check_response(response):
 
 
 def parse_status(homework):
-    """Извлекает статус домашней работы"""
+    """Извлекает статус домашней работы."""
     if 'homework_name' not in homework:
         log_and_raise('Homework_name - Ключ недоступен',
                       KeyError)
@@ -118,10 +112,10 @@ def parse_status(homework):
 
 
 def main():
-    """Основная логика работы бота"""
+    """Основная логика работы бота."""
     check_tokens()
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
-    timestamp = 1701681718 #int(time.time())
+    timestamp = int(time.time())
     actual_status = ''
     actual_errors = ''
     while True:
