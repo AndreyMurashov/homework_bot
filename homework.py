@@ -8,7 +8,7 @@ import telegram
 import requests
 
 from dotenv import load_dotenv
-import exceptions
+from exceptions import *
 from settings import ENDPOINT, HOMEWORK_VERDICTS, RETRY_PERIOD
 
 load_dotenv()
@@ -18,17 +18,6 @@ TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    filename='homework.log',
-)
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-handler = logging.StreamHandler(stream=sys.stdout)
-logger.addHandler(handler)
-
 
 def log_and_raise(message, type_error):
     """Логгирует ошибки и выбрасывает исключнения."""
@@ -37,11 +26,7 @@ def log_and_raise(message, type_error):
 
 
 def check_tokens():
-    """Проверяет переменные окружения."""
-    if not PRACTICUM_TOKEN or not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
-        message = 'Ошибка в переменных окружения'
-        logger.critical(message)
-        raise ValueError(message)
+    """Возвращает переменные окружения."""
     return all([PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID])
 
 
@@ -49,10 +34,10 @@ def send_message(bot, message):
     """Отправляет сообщение."""
     try:
         logger.debug(f'Бот отправил сообщение: {message}')
-        return bot.send_message(TELEGRAM_CHAT_ID, message)
+        bot.send_message(TELEGRAM_CHAT_ID, message)
     except telegram.error.TelegramError as error:
         log_and_raise(f'Боту не удалось отправить сообщение: {error}',
-                      exceptions.SendMessageException)
+                      SendMessageException)
 
 
 def get_api_answer(timestamp):
@@ -67,15 +52,15 @@ def get_api_answer(timestamp):
         )
     except Exception as error:
         log_and_raise(f'{ENDPOINT} - Эндпойнт  недоступен: {error}',
-                      exceptions.GetAPIAnswerException)
+                      GetAPIAnswerException)
     if homework_verdicts.status_code != HTTPStatus.OK:
         log_and_raise(f'Код ответа: {homework_verdicts.status_code}',
-                      exceptions.GetAPIAnswerException)
+                      GetAPIAnswerException)
     try:
         return homework_verdicts.json()
     except Exception as error:
         log_and_raise(f'Ошибка преобразования к JSON-формату : {error}',
-                      exceptions.GetAPIAnswerException)
+                      GetAPIAnswerException)
 
 
 def check_response(response):
@@ -103,17 +88,18 @@ def parse_status(homework):
                       KeyError)
     homework_name = homework['homework_name']
     homework_verdict = homework['status']
-    if homework_verdict in HOMEWORK_VERDICTS:
-        verdict = HOMEWORK_VERDICTS[homework_verdict]
-        return f'Изменился статус проверки работы "{homework_name}". {verdict}'
-    else:
+    if homework_verdict not in HOMEWORK_VERDICTS:
         log_and_raise('Неизвестный статус домашней работы',
-                      exceptions.ParseStatusException)
-
+                      ParseStatusException)
+    verdict = HOMEWORK_VERDICTS[homework_verdict]
+    return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 def main():
     """Основная логика работы бота."""
-    check_tokens()
+    if not check_tokens():
+        message = 'Ошибка в переменных окружения'
+        logger.critical(message)
+        raise ValueError(message)
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     timestamp = int(time.time())
     actual_status = ''
@@ -142,4 +128,15 @@ def main():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s [%(levelname)s] %(message)s',
+        filename='homework.log',
+    )
+    
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler(stream=sys.stdout)
+    logger.addHandler(handler)
+    
     main()
