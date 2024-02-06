@@ -8,7 +8,9 @@ import telegram
 import requests
 
 from dotenv import load_dotenv
-from exceptions import *
+from exceptions import (GetAPIAnswerException,
+                        ParseStatusException,
+                        SendMessageException)
 from settings import ENDPOINT, HOMEWORK_VERDICTS, RETRY_PERIOD
 
 load_dotenv()
@@ -94,6 +96,7 @@ def parse_status(homework):
     verdict = HOMEWORK_VERDICTS[homework_verdict]
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
+
 def main():
     """Основная логика работы бота."""
     if not check_tokens():
@@ -133,10 +136,10 @@ if __name__ == '__main__':
         format='%(asctime)s [%(levelname)s] %(message)s',
         filename='homework.log',
     )
-    
+
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
     handler = logging.StreamHandler(stream=sys.stdout)
     logger.addHandler(handler)
-    
+
     main()
