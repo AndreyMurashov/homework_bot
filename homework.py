@@ -20,6 +20,17 @@ TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    filename='homework.log',
+)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler(stream=sys.stdout)
+logger.addHandler(handler)
+
 
 def log_and_raise(message, type_error):
     """Логгирует ошибки и выбрасывает исключнения."""
@@ -131,15 +142,4 @@ def main():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='%(asctime)s [%(levelname)s] %(message)s',
-        filename='homework.log',
-    )
-
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-    handler = logging.StreamHandler(stream=sys.stdout)
-    logger.addHandler(handler)
-
     main()
